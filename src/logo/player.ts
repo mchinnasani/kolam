@@ -14,7 +14,7 @@ void main(){
  float life=u_twinkle*smoothstep(.35,1.,t);
  vec2 current=vec2(sin(a_end.y*5.+u_time*.65),cos(a_end.x*4.-u_time*.55));
  vec2 drift=vec2(sin(u_time*.9+a_seed*41.),cos(u_time*.7+a_seed*67.));
- p+=life*(current*.026+drift*.011);
+ p+=life*(current*.045+drift*.016);
  vec2 away=p-u_pointer; float d=length(away);
  p+=away/max(d,.001)*exp(-d*d*18.)*.075*u_hover*life;
  gl_Position=vec4(p*u_fit,0.,1.);
@@ -26,7 +26,7 @@ void main(){
  v_color=vec4(c*pulse,a_color.a); gl_PointSize=u_size*u_dpr*4.*(.88+.24*a_seed);
 }`;
 const fragment = `precision mediump float; varying vec4 v_color; uniform float u_glow;
-void main(){float r=length(gl_PointCoord-.5);float core=1.-smoothstep(.07,.18,r);float halo=exp(-r*r*28.)*u_glow*.46;float a=(core+halo)*v_color.a;if(a<.008)discard;gl_FragColor=vec4(v_color.rgb*a,a);}`;
+void main(){float r=length(gl_PointCoord-.5);float core=1.-smoothstep(.07,.18,r);float halo=exp(-r*r*20.)*u_glow*.68;float a=(core+halo)*v_color.a;if(a<.008)discard;gl_FragColor=vec4(v_color.rgb*a,a);}`;
 export type PlayerMetrics = { frameMs: number; drawCalls: number; particles: number; dpr: number };
 /** GPU path playback: immutable buffers, one draw per active frame, no React dependency. */
 export class LogoPlayer {

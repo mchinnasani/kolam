@@ -16,8 +16,8 @@ export type LogoData = {
 export const defaults: LogoSettings = {
   palette: "aurora",
   size: 2.3,
-  glow: 0.65,
-  twinkle: 0.35,
+  glow: 0.85,
+  twinkle: 0.6,
   duration: 3.5,
 };
 export const MAX_POINTS = 16000;
