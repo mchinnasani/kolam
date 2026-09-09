@@ -7,3 +7,5 @@ demo-dist/
 *.tsbuildinfo
 
 .venv/
+
+public/logo-player.js

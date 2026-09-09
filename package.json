@@ -1,7 +1,7 @@
 {
   "name": "@mchinnasani/kolam",
   "version": "0.1.0",
-  "description": "Reduce animation work with compressed planet point data, precomputed motion paths, and cached rendering.",
+  "description": "Turn logos into vibrant particle animations. Browser converter, compressed files, and a reusable GPU player.",
   "type": "module",
   "private": true,
   "engines": {
@@ -16,7 +16,11 @@
       "types": "./dist/react.d.ts",
       "import": "./dist/react.js"
     },
-    "./space.css": "./src/space.css"
+    "./space.css": "./src/space.css",
+    "./logo": {
+      "types": "./dist/logo/standalone.d.ts",
+      "import": "./dist/logo.js"
+    }
   },
   "files": [
     "dist",
@@ -28,9 +32,11 @@
   "scripts": {
     "dev": "vite --config vite.demo.config.ts --host 127.0.0.1",
     "build": "vite build && tsc -p tsconfig.build.json",
-    "build:demo": "vite build --config vite.demo.config.ts",
+    "build:demo": "npm run build:player && vite build --config vite.demo.config.ts",
     "typecheck": "tsc --noEmit",
-    "test": "node --loader ./scripts/animation-test-loader.mjs --test tests/*.test.ts"
+    "test": "node --loader ./scripts/animation-test-loader.mjs --test tests/*.test.ts",
+    "build:player": "vite build --config vite.player.config.ts",
+    "predev": "npm run build:player"
   },
   "devDependencies": {
     "typescript": "5.9.3",
@@ -51,5 +57,6 @@
     "react-dom": {
       "optional": true
     }
-  }
+  },
+  "license": "MIT"
 }
