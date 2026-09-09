@@ -121,21 +121,42 @@ export function samplePixels(
     throw new Error("Invalid dot spacing.");
   const points: number[] = [],
     scale = Math.max(width, height);
-  for (let y = Math.floor(spacing / 2); y < height; y += spacing)
-    for (let x = Math.floor(spacing / 2); x < width; x += spacing) {
-      const i = (y * width + x) * 4;
-      if (
-        pixels[i + 3] < 32 ||
-        (removeWhite && Math.min(pixels[i], pixels[i + 1], pixels[i + 2]) > 235)
-      )
-        continue;
+  for (let cy = 0; cy < height; cy += spacing)
+    for (let cx = 0; cx < width; cx += spacing) {
+      let weight = 0,
+        sx = 0,
+        sy = 0,
+        red = 0,
+        green = 0,
+        blue = 0,
+        occupied = 0;
+      // Alpha-weighted cell centroids keep thin strokes and partial edge cells.
+      // Sampling only the center can miss an entire narrow logo component.
+      for (let y = cy; y < Math.min(height, cy + spacing); y++)
+        for (let x = cx; x < Math.min(width, cx + spacing); x++) {
+          const i = (y * width + x) * 4,
+            a = pixels[i + 3] / 255;
+          if (
+            pixels[i + 3] < 3 ||
+            (removeWhite && Math.min(pixels[i], pixels[i + 1], pixels[i + 2]) > 235)
+          )
+            continue;
+          weight += a;
+          sx += x * a;
+          sy += y * a;
+          red += pixels[i] * a;
+          green += pixels[i + 1] * a;
+          blue += pixels[i + 2] * a;
+          occupied++;
+        }
+      if (!occupied) continue;
       points.push(
-        Number((((x - width / 2) / scale) * 2).toFixed(5)),
-        Number((((height / 2 - y) / scale) * 2).toFixed(5)),
-        Number((pixels[i] / 255).toFixed(3)),
-        Number((pixels[i + 1] / 255).toFixed(3)),
-        Number((pixels[i + 2] / 255).toFixed(3)),
-        Number((pixels[i + 3] / 255).toFixed(3)),
+        Number((((sx / weight - width / 2) / scale) * 2).toFixed(5)),
+        Number((((height / 2 - sy / weight) / scale) * 2).toFixed(5)),
+        Number((red / weight / 255).toFixed(3)),
+        Number((green / weight / 255).toFixed(3)),
+        Number((blue / weight / 255).toFixed(3)),
+        Number((weight / occupied).toFixed(3)),
       );
     }
   if (!points.length)

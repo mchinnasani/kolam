@@ -1,3 +1,4 @@
+import { normalizeForeground, type Foreground } from "../src/logo/foreground";
 import { standaloneHtml } from "../src/logo/html";
 import { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
@@ -52,7 +53,16 @@ function App() {
   const [data, setData] = useState<LogoData | null>(null),
     [settings, setSettings] = useState<LogoSettings>({ ...defaults }),
     [spacing, setSpacing] = useState(6),
-    [white, setWhite] = useState(false);
+    [backgroundMode, setBackgroundMode] = useState<"auto" | "alpha">("auto"),
+    [padding, setPadding] = useState(0.06),
+    [sensitivity, setSensitivity] = useState(1),
+    [foreground, setForeground] = useState<Foreground | null>(null),
+    [normalization, setNormalization] = useState<{
+      width: number;
+      height: number;
+      scale: number;
+    } | null>(null);
+  const originalDimensions = useRef({ width: 480, height: 480 });
   const [name, setName] = useState("Kolam mark"),
     [sourceSize, setSourceSize] = useState<number | null>(null),
     [packed, setPacked] = useState(0),
@@ -86,21 +96,53 @@ function App() {
   }, []);
   useEffect(() => {
     if (!source.current) return;
+    const c = source.current,
+      pixels = c.getContext("2d")!.getImageData(0, 0, c.width, c.height).data;
+    const worker = new Worker(new URL("../src/logo/foreground.worker.ts", import.meta.url), {
+      type: "module",
+    });
+    setBusy(true);
+    setForeground(null);
+    setData(null);
+    setError("");
+    worker.onmessage = (event) => {
+      setBusy(false);
+      if (event.data.error) {
+        setError(event.data.error);
+        player.current?.pause();
+        return;
+      }
+      setForeground(event.data.result);
+    };
+    worker.onerror = () => {
+      setBusy(false);
+      setError("Image analysis could not finish. Try a smaller image.");
+    };
+    worker.postMessage(
+      { pixels, width: c.width, height: c.height, options: { mode: backgroundMode, sensitivity } },
+      [pixels.buffer],
+    );
+    return () => worker.terminate();
+  }, [sourceVersion, backgroundMode, sensitivity]);
+  useEffect(() => {
+    if (!foreground) return;
     try {
-      const c = source.current;
+      const normalized = normalizeForeground(foreground, padding);
       const next = samplePixels(
-        c.getContext("2d")!.getImageData(0, 0, c.width, c.height).data,
-        c.width,
-        c.height,
+        normalized.pixels,
+        normalized.width,
+        normalized.height,
         spacing,
-        white,
+        false,
       );
+      setNormalization({ width: normalized.width, height: normalized.height, scale: normalized.scale });
       setData(next);
       setError("");
     } catch (e) {
+      setData(null);
       setError((e as Error).message);
     }
-  }, [sourceVersion, spacing, white]);
+  }, [foreground, padding, spacing]);
   useEffect(() => {
     if (data && player.current) {
       try {
@@ -141,6 +183,9 @@ function App() {
         const next = await decodeLogo(new Uint8Array(await file.arrayBuffer()));
         if (ticket !== uploadTicket.current) return;
         source.current = null;
+        setForeground(null);
+        setNormalization(null);
+        setSourceVersion((v) => v + 1);
         setSettings(next.settings);
         setData(next);
         setName(file.name);
@@ -158,10 +203,17 @@ function App() {
         if (ticket !== uploadTicket.current) return;
         if (!image.naturalWidth || !image.naturalHeight)
           throw new Error("This image has no usable dimensions.");
-        const scale = Math.min(1, 480 / Math.max(image.naturalWidth, image.naturalHeight));
+        originalDimensions.current = { width: image.naturalWidth, height: image.naturalHeight };
+        // Analyze before particle normalization. Bound analysis work without collapsing
+        // ordinary padded images to the 480px particle resolution.
+        const scale = Math.min(
+          1,
+          4096 / Math.max(image.naturalWidth, image.naturalHeight),
+          Math.sqrt(4_194_304 / (image.naturalWidth * image.naturalHeight)),
+        );
         const c = document.createElement("canvas");
-        c.width = Math.max(1, Math.round(image.naturalWidth * scale));
-        c.height = Math.max(1, Math.round(image.naturalHeight * scale));
+        c.width = Math.max(1, Math.floor(image.naturalWidth * scale));
+        c.height = Math.max(1, Math.floor(image.naturalHeight * scale));
         c.getContext("2d")!.drawImage(image, 0, 0, c.width, c.height);
         source.current = c;
         setName(file.name);
@@ -400,15 +452,77 @@ function App() {
                 value={settings.size}
                 onChange={(e) => change("size", Number(e.target.value))}
               />
-              <label className="check">
-                <input
-                  type="checkbox"
-                  checked={white}
-                  disabled={!source.current}
-                  onChange={(e) => setWhite(e.target.checked)}
-                />{" "}
-                Remove near-white background
+              <label className="range-label" htmlFor="background-mode">
+                Background
               </label>
+              <select
+                id="background-mode"
+                value={backgroundMode}
+                disabled={!source.current}
+                onChange={(e) => setBackgroundMode(e.target.value as "auto" | "alpha")}
+              >
+                <option value="auto">Detect automatically</option>
+                <option value="alpha">Keep image colors (alpha only)</option>
+              </select>
+              <label className="range-label" htmlFor="padding">
+                Object padding<output>{Math.round(padding * 100)}%</output>
+              </label>
+              <input
+                id="padding"
+                type="range"
+                min="0"
+                max=".2"
+                step=".01"
+                value={padding}
+                disabled={!source.current}
+                onChange={(e) => setPadding(Number(e.target.value))}
+              />
+              <label className="range-label" htmlFor="sensitivity">
+                Detail sensitivity<output>{sensitivity.toFixed(1)}</output>
+              </label>
+              <input
+                id="sensitivity"
+                type="range"
+                min=".5"
+                max="2"
+                step=".1"
+                value={sensitivity}
+                disabled={!source.current || backgroundMode === "alpha"}
+                onChange={(e) => setSensitivity(Number(e.target.value))}
+              />
+              {foreground && normalization && (
+                <details className="extraction-debug">
+                  <summary>Image framing details</summary>
+                  <dl>
+                    <dt>Original</dt>
+                    <dd>
+                      {originalDimensions.current.width} × {originalDimensions.current.height}
+                    </dd>
+                    <dt>Analyzed</dt>
+                    <dd>
+                      {foreground.info.originalWidth} × {foreground.info.originalHeight}
+                    </dd>
+                    <dt>Bounds (analyzed pixels)</dt>
+                    <dd>
+                      {foreground.info.bounds.x}, {foreground.info.bounds.y} · {foreground.width} ×{" "}
+                      {foreground.height}
+                    </dd>
+                    <dt>Normalized</dt>
+                    <dd>
+                      {normalization.width} × {normalization.height}
+                    </dd>
+                    <dt>Foreground</dt>
+                    <dd>{foreground.info.foregroundPercent.toFixed(2)}%</dd>
+                    <dt>Strategy</dt>
+                    <dd>{foreground.info.strategy}</dd>
+                    <dt>Scale from crop</dt>
+                    <dd>{normalization.scale.toFixed(3)}×</dd>
+                    <dt>Regions kept</dt>
+                    <dd>{foreground.info.components}</dd>
+                  </dl>
+                  {foreground.info.warning && <p>{foreground.info.warning}</p>}
+                </details>
+              )}
             </fieldset>
             <fieldset>
               <legend>

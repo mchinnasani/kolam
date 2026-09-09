@@ -621,3 +621,6 @@ footer {
     scroll-behavior: auto !important;
   }
 }
+
+#background-mode { width:100%; margin-top:10px; padding:8px; border:1px solid #ffffff25; border-radius:4px; background:#171c17; color:#cad8c2; font:11px inherit; }
+.extraction-debug{font-size:10px;color:#a6b59c;margin-top:14px;line-height:1.7}.extraction-debug summary{cursor:pointer}.extraction-debug dl{display:grid;grid-template-columns:1fr 1fr;gap:5px}.extraction-debug dd{margin:0;overflow-wrap:anywhere}

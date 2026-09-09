@@ -14,7 +14,9 @@ Everything is converted in your browser. There is no upload server, account, or 
 - **`.kolam` animation:** compressed particle positions, colors, and settings. Load it with the player or import it back into the studio.
 - **PNG:** a still image of the current preview on its dark background.
 
-The editor supports files up to 8 MB and samples images at up to 480 pixels along their longest side. Transparent logos work best. For logos on white, try “Remove near-white background.” This removes all near-white pixels, including any white details you want to keep, so leave it off when those details matter. SVGs are rasterized before sampling; fine details depend on dot spacing.
+The editor supports files up to 8 MB. It finds the visible object before resizing: transparency comes first, otherwise it estimates the background from the image border. White and black logo details are not automatically discarded. The cropped object gets adjustable padding, then is sampled at up to 480 pixels along its longest side. Analysis runs in a worker and is limited to 4 megapixels and 4096 pixels per side.
+
+Open **Image framing details** to check the detected bounds, strategy, and scale. Adjust detail sensitivity for faint artwork, or choose **Keep image colors** when the background is intentional. SVGs are rasterized before analysis. [Detection algorithm and test results](docs/foreground-extraction.md).
 
 ## Run it locally
 
@@ -73,7 +75,7 @@ To connect it to scroll, calculate progress for your section and pass a clamped 
 
 I started this because the particle animation on my portfolio was making my laptop lag. The useful part was separating setup from playback. This tool applies that idea to logos people can bring themselves.
 
-1. **Sample once.** Decode the image into a small canvas. Each occupied grid cell becomes a dot, keeping its position, color, and transparency.
+1. **Sample once.** Detect the foreground, remove isolated specks, and crop around all meaningful regions. Add padding and normalize the crop. Each occupied grid cell becomes a dot at its alpha-weighted center, keeping its color and transparency.
 2. **Save the shape.** Round those values and gzip the data with the settings. A `.kolam` file is versioned JSON inside gzip, not a video or a sequence of rendered frames.
 3. **Prepare the routes.** At load time, a fixed seed gives every dot a start position and two control points leading to its destination. The routes live in GPU buffers.
 4. **Play the paths.** A shader evaluates the prepared curves using one progress value. Changing color or glow updates settings, not geometry. Rotation is not part of the logo player; the earlier planet example has its own renderer.
@@ -86,6 +88,8 @@ This does not make every image file smaller. A small SVG or PNG can be smaller t
 | Part | File |
 | --- | --- |
 | Pixel sampling, validation, compression, prepared paths | [format.ts](src/logo/format.ts) |
+| Foreground detection and normalization | [foreground.ts](src/logo/foreground.ts) |
+| Synthetic crop and particle tests | [foreground.test.ts](tests/foreground.test.ts) |
 | Independent WebGL player | [player.ts](src/logo/player.ts) |
 | Upload interface, controls, and exports | [main.tsx](demo/main.tsx) |
 | Player bundle entry | [standalone.ts](src/logo/standalone.ts) |

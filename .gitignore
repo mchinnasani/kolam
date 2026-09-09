@@ -9,3 +9,5 @@ demo-dist/
 .venv/
 
 public/logo-player.js
+
+artifacts/
