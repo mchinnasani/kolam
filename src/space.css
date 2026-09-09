@@ -1,0 +1,202 @@
+:root {
+  --kolam-void: #000; --kolam-line: #e8f4ff;
+  --kolam-accent-1: #edc790; --kolam-accent-2: #89cbd1;
+  --kolam-accent-3: #768cde; --kolam-dot: #b3c4df; --kolam-glow: #335587;
+}
+.kolam-hero { position: relative; height: 760svh; background: #000; }
+.kolam-stage { position: sticky; top: 0; height: 100svh; overflow: hidden; isolation: isolate; background: #000; }
+.kolam-canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: pan-y; opacity: var(--scene-opacity, 1); }
+.kolam-darkness { position: absolute; inset: 0; background: #000; pointer-events: none; animation: darkness-lift 3s .4s both; }
+.kolam-opening { position: absolute; top: 14%; left: 0; right: 0; display: grid; gap: 12px; text-align: center; pointer-events: none; animation: navigation-arrival 2s 2s both; transition: opacity 1s; }
+.kolam-opening span:first-child { font-size: 9px; letter-spacing: .3em; color: #9ba5b5; }
+.kolam-opening span:last-child { font-size: clamp(16px, 2vw, 24px); letter-spacing: -.035em; font-weight: 300; color: #dce1e9; }
+.kolam-stage[data-started] .kolam-opening { opacity: 0; animation: none; }
+.kolam-skip { position: absolute; right: 32px; bottom: 32px; z-index: 4; display: flex; align-items: center; gap: 10px; color: #8e96a6; font-size: 10px; animation: navigation-arrival 1s 3s both; }
+.kolam-skip .arrow { width: 14px; }
+.kolam-hint { position: absolute; bottom: 35px; left: 50%; translate: -50% 0; display: flex; flex-direction: column; gap: 16px; align-items: center; font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: #aab2bf; animation: navigation-arrival 1s 3s both; transition: opacity .5s; }
+.kolam-hint > span { width: 1px; height: 32px; background: linear-gradient(transparent, #b0c3e4); animation: hint-drift 2s ease-in-out infinite; }
+.kolam-stage[data-started] .kolam-hint { opacity: 0; animation: none; }
+.kolam-overlay { position: absolute; inset: 0; display: flex; align-items: center; visibility: hidden; pointer-events: none; opacity: 0; transform: perspective(1200px) translateZ(-150px); transition: opacity 1.2s, transform 1.6s var(--ease), visibility 1.2s; }
+.kolam-stage[data-revealed] .kolam-overlay, .kolam-overlay:focus-within { opacity: 1; visibility: visible; transform: none; pointer-events: auto; }
+.kolam-title { max-width: 960px; }
+.kolam-eyebrow { font-size: 9px; letter-spacing: .24em; color: #9aa8bd; margin-bottom: 28px; }
+.kolam-title h1 { font-family: inherit; font-size: clamp(46px, 8vw, 104px); font-weight: 400; letter-spacing: -.075em; line-height: 1; }
+.kolam-title h1 span { color: #a9b2c2; }
+.kolam-lede { margin-top: 25px; font-size: 15px; line-height: 1.8; color: #9ba4b4; }
+.kolam-chapters { display: grid; grid-template-columns: repeat(3, 1fr); gap: 35px; margin-top: 55px; }
+.kolam-chapters a { display: flex; align-items: center; gap: 12px; border-top: 1px solid #ffffff35; padding: 22px 0; font-size: 17px; transition: color .3s, border-color .3s; }
+.kolam-chapters a:hover { color: #b8d5ff; border-color: #b8d5ff; }
+.chapter-number { font: 9px ui-monospace, monospace; color: #8290a5; align-self: start; padding-top: 3px; }
+.kolam-chapters .arrow { margin-left: auto; width: 18px; transition: transform .4s; }
+.kolam-chapters a:hover .arrow { transform: translate(3px, -3px); }
+.kolam-progress { position: absolute; bottom: 0; left: 0; right: 0; height: 1px; background: #ffffff08; }
+.kolam-progress span { display: block; height: 100%; background: #b4c9e3; transform: scaleX(var(--journey, 0)); transform-origin: left; }
+.kolam-hero[data-failed] { height: 100svh; min-height: 680px; }
+.kolam-hero[data-failed] .kolam-stage { height: 100%; min-height: 680px; }
+.kolam-hero[data-failed] .kolam-overlay { visibility: visible; opacity: 1; transform: none; pointer-events: auto; }
+.kolam-hero[data-failed] .kolam-opening, .kolam-hero[data-failed] .kolam-hint { display: none; }
+@keyframes darkness-lift { from { opacity: 1; } to { opacity: 0; } }
+@keyframes navigation-arrival { from { opacity: 0; } to { opacity: 1; } }
+@keyframes hint-drift { 50% { transform: translateY(6px); opacity: .4; } }
+@media (max-width: 639px) {
+  .kolam-hero { height: 620svh; }
+  .kolam-opening { top: 19%; }
+  .kolam-title h1 { font-size: clamp(43px, 11.5vw, 70px); }
+  .kolam-eyebrow { margin-bottom: 24px; font-size: 8px; }
+  .kolam-lede { font-size: 13px; }
+  .kolam-chapters { grid-template-columns: 1fr; gap: 0; margin-top: 30px; }
+  .kolam-chapters a { padding: 14px 0; font-size: 16px; }
+  .kolam-skip { right: 20px; bottom: 22px; font-size: 9px; }
+  .kolam-hint { left: 24px; translate: none; align-items: start; bottom: 23px; font-size: 8px; }
+}
+@media (max-height: 600px) and (min-width: 640px) {
+  .kolam-title h1 { font-size: 52px; }
+  .kolam-chapters { margin-top: 20px; }
+  .kolam-eyebrow { margin-bottom: 15px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kolam-hero { height: auto; }
+  .kolam-stage { position: relative; min-height: 720px; }
+  .kolam-overlay { opacity: 1; visibility: visible; transform: none; pointer-events: auto; }
+  .kolam-darkness, .kolam-opening, .kolam-hint { display: none; }
+  .kolam-canvas { opacity: .12; }
+}
+/* The identity stays in the sky; the destinations live around the central kolam. */
+.kolam-opening { top: 11%; gap: 8px; z-index: 2; }
+.kolam-opening .name-caption { color: #a0acc4; font-size: 8px; letter-spacing: .3em; }
+.kolam-opening h1 { font-family: inherit; font-size: clamp(20px, 2.6vw, 35px); font-weight: 350; line-height: 1.2; letter-spacing: -.04em; color: #e8eefb; text-shadow: 0 0 30px #93b6ff30; }
+.kolam-stage[data-started] .kolam-opening { opacity: 1; animation: none; }
+.name-constellation { position: absolute; width: min(500px, 85vw); height: 100px; left: 50%; top: -45px; translate: -50% 0; color: #8dabdf; opacity: .45; z-index: -1; }
+.arrival-stars { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 2s; }
+.kolam-stage[data-started] .arrival-stars { opacity: .7; }
+.arrival-stars i { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: #c6dcff; box-shadow: 0 0 7px #b6d2ff; animation: star-glimmer 5s ease-in-out infinite; }
+.arrival-stars i:nth-child(9n)::before, .arrival-stars i:nth-child(9n)::after { content: ''; position: absolute; background: linear-gradient(transparent, #bdd6ff, transparent); width: 1px; height: 12px; top: -5px; left: .5px; }
+.arrival-stars i:nth-child(9n)::after { rotate: 90deg; }
+.planet-navigation { display: block; transform: none; }
+.planet-destination { position: absolute; display: flex; flex-direction: column; align-items: center; gap: 25px; width: 190px; transition: translate 1.8s var(--ease); translate: 0 35px; }
+.kolam-stage[data-revealed] .planet-destination { translate: 0 0; }
+.planet-about { left: 7%; top: 33%; }
+.planet-projects { right: 6%; top: 27%; transition-delay: .12s; }
+.planet-interests { right: 13%; bottom: 12%; transition-delay: .24s; }
+.planet-orb { display: block; position: relative; width: 105px; height: 105px; border-radius: 50%; transition: transform .7s var(--ease); }
+.planet-surface { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 27% 23%, #a7d5e1 0%, #45869e 20%, #24495d 40%, #07121f 69%, #010206 80%); box-shadow: inset -12px -9px 24px #000, inset 2px 2px 4px #ccefff80, 0 0 22px #548fa51f; }
+.planet-surface::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: repeating-linear-gradient(155deg, transparent 0 6px, #c1e7ff12 7px 8px, transparent 9px 16px); mix-blend-mode: screen; opacity: .5; }
+.planet-projects .planet-orb { width: 120px; height: 120px; }
+.planet-projects .planet-surface { background: radial-gradient(circle at 28% 22%, #f1dcac, #b98d58 26%, #66523e 48%, #16110b 72%, #010101 83%); box-shadow: inset -12px -9px 24px #000, inset 2px 2px 4px #ffe6ad90, 0 0 25px #bb8c4020; }
+.planet-ring { position: absolute; inset: 30% -37%; border: 9px solid #b4a28580; border-left-color: #d2bf9999; border-bottom-color: #b4a28533; border-radius: 50%; rotate: -28deg; box-shadow: 0 0 0 2px #a4937340, 0 0 0 6px #a4937320; }
+.planet-interests .planet-orb { width: 72px; height: 72px; }
+.planet-interests .planet-surface { background: radial-gradient(circle at 28% 22%, #b7b6df, #716c9a 24%, #383c69 45%, #070b20 73%); }
+.planet-label { display: grid; gap: 8px; text-align: center; }
+.planet-label small { font: 8px ui-monospace, monospace; letter-spacing: .16em; color: #97a5bb; }
+.planet-label > span { display: flex; align-items: center; justify-content: center; gap: 12px; color: #e2e9f5; font-size: 17px; }
+.planet-label .arrow { width: 14px; height: 14px; opacity: .6; }
+.planet-destination:hover .planet-orb, .planet-destination:focus-visible .planet-orb { transform: translateY(-7px) scale(1.07); }
+.planet-destination:hover .planet-label > span { color: #b6d5ff; }
+.planet-invitation { position: absolute; bottom: 7%; left: 50%; translate: -50% 0; font-size: 10px; letter-spacing: .13em; color: #98a4b7; white-space: nowrap; }
+.interest-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 36px; margin-top: 48px; }
+.interest-list > div { border-top: 1px solid var(--hairline); padding-top: 22px; }
+.interest-list > div > span { font: 10px ui-monospace, monospace; color: #7d92b0; }
+.interest-list h3 { margin: 20px 0 12px; font-size: 19px; font-weight: 400; }
+.interest-list p { color: var(--text-muted); font-size: 15px; }
+@keyframes star-glimmer { 50% { opacity: .2; } }
+@media (max-width: 760px) {
+  .kolam-opening { top: 12%; }
+  .planet-destination { width: 120px; gap: 15px; }
+  .planet-about { left: 3%; top: 21%; }
+  .planet-projects { right: 3%; top: 19%; }
+  .planet-interests { right: 7%; bottom: 14%; }
+  .planet-orb { width: 66px; height: 66px; }
+  .planet-projects .planet-orb { width: 72px; height: 72px; }
+  .planet-interests .planet-orb { width: 54px; height: 54px; }
+  .planet-label > span { font-size: 14px; gap: 7px; }
+  .planet-label small { font-size: 7px; letter-spacing: .08em; }
+  .planet-ring { border-width: 5px; }
+  .planet-invitation { bottom: 8%; font-size: 9px; }
+  .interest-list { grid-template-columns: 1fr; gap: 28px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kolam-opening { display: grid; }
+  .arrival-stars { opacity: .6; }
+  .name-constellation { translate: -50% 0 !important; }
+  .planet-invitation { translate: -50% 0 !important; }
+}
+.kolam-hero[data-failed] .kolam-opening { display: grid; }
+.star-object { display: block; position: relative; width: 100%; height: 100%; }
+.star-object canvas { display: block; width: 100%; height: 100%; opacity: 0; transition: opacity .7s; }
+.star-object.is-ready canvas { opacity: 1; }
+.star-fallback { position: absolute; inset: 0; display: grid; place-items: center; color: #c7d9ef; }
+.star-object.is-ready .star-fallback { visibility: hidden; }
+.kolam-opening .star-name { width: min(480px, 90vw); height: clamp(44px, 5vw, 64px); margin: -8px auto 0; }
+.star-name .star-fallback { font-size: clamp(20px, 2.6vw, 35px); }
+/* Preserve each destination's existing location; only replace its artwork. */
+.planet-navigation .planet-destination .planet-orb { width: 180px; height: 180px; margin: -30px; border-radius: 0; }
+.planet-navigation .planet-destination.planet-projects .planet-orb { width: 210px; height: 210px; }
+.planet-navigation .planet-destination.planet-interests .planet-orb { width: 145px; height: 145px; }
+.planet-navigation .planet-label { opacity: .15; translate: 0 5px; transition: opacity .45s, translate .45s; }
+.planet-navigation .planet-destination:hover .planet-label, .planet-navigation .planet-destination:focus-visible .planet-label { opacity: 1; translate: 0 0; }
+.planet-navigation .planet-destination:hover .planet-orb, .planet-navigation .planet-destination:focus-visible .planet-orb { transform: none; }
+.star-flight { position: fixed; inset: 0; background: #000; z-index: 100; animation: flight-appear .25s both; }
+.star-flight-canvas { position: absolute; inset: 0; }
+.star-flight::after { content: ''; position: absolute; inset: 0; background: #000; opacity: 0; animation: flight-black .35s 2.25s forwards; pointer-events: none; }
+.flight-cancel { position: absolute; right: 25px; bottom: 24px; color: #a0aec4; border: 0; background: transparent; font-size: 11px; z-index: 2; }
+.flight-streaks { position: absolute; inset: 0; overflow: hidden; }
+.flight-streaks i { position: absolute; left: 50%; top: 50%; width: 60px; height: 1px; background: linear-gradient(90deg, transparent, #adccff); transform-origin: 0 0; animation: star-rush 2.2s cubic-bezier(.4,0,.25,1) both; }
+@keyframes star-rush { 0% { transform: translateX(10vw) scaleX(.03); opacity: 0; } 25% { opacity: .65; } 70% { opacity: .4; } 100% { transform: translateX(85vw) scaleX(1.6); opacity: 0; } }
+@keyframes flight-appear { from { opacity: 0; } to { opacity: 1; } }
+@keyframes flight-black { to { opacity: 1; } }
+@keyframes destination-reveal { from { opacity: 1; } to { opacity: 0; visibility: hidden; } }
+@media (max-width: 760px) {
+  .planet-navigation .planet-destination .planet-orb { width: 110px; height: 110px; margin: -17px; }
+  .planet-navigation .planet-destination.planet-projects .planet-orb { width: 125px; height: 125px; }
+  .planet-navigation .planet-destination.planet-interests .planet-orb { width: 95px; height: 95px; }
+  .planet-navigation .planet-label { opacity: .85; translate: none; }
+}
+@media (hover: none) { .planet-navigation .planet-label { opacity: .85; translate: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .planet-navigation .planet-label { opacity: 1; }
+}
+.planet-navigation .planet-destination:has(.star-object:not(.is-ready)) .planet-label { opacity: 1; }
+dialog.star-flight { margin: 0; padding: 0; border: 0; width: 100vw; height: 100dvh; max-width: none; max-height: none; }
+/* Portals follow the completed journey reveal; the wrapper leaves the kolam interactive. */
+.kolam-stage .permanent-planets, .kolam-stage[data-revealed] .permanent-planets { pointer-events: none; }
+.kolam-stage .permanent-planets .planet-destination { pointer-events: auto; }
+.permanent-planets .planet-label { opacity: .8; translate: none; }
+.permanent-planets .planet-invitation { opacity: 0; transition: opacity 1s; }
+.kolam-stage[data-revealed] .permanent-planets .planet-invitation { opacity: 1; }
+/* A star remains available while point colors load or WebGL is unavailable. */
+.planet-points-fallback { color: #8ecaff; font-size: 28px; }
+.planet-material-projects .planet-points-fallback { color: #e7bd72; }
+.planet-material-interests .planet-points-fallback { color: #b693ef; }
+.planet-object.is-ready .planet-points-fallback { visibility: hidden; }
+
+/* Scroll gathers the same scattered points into the three final destinations. */
+.kolam-stage .permanent-planets { opacity: 1; visibility: visible; transform: none; transition: none; }
+.kolam-stage .permanent-planets .planet-destination { visibility: hidden; pointer-events: none; translate: none; }
+.kolam-stage .permanent-planets .planet-object canvas { visibility: visible; pointer-events: none; position: fixed; width: 100%; height: 100%; left: 0; top: 0; }
+.kolam-stage[data-revealed] .permanent-planets .planet-destination,
+.kolam-hero[data-failed] .permanent-planets .planet-destination { visibility: visible; pointer-events: auto; }
+.kolam-stage .permanent-planets .planet-label { opacity: 0; transition: opacity 1s; }
+.kolam-stage[data-revealed] .permanent-planets .planet-label,
+.kolam-hero[data-failed] .permanent-planets .planet-label { opacity: .8; }
+.kolam-stage .kolam-opening { opacity: 0; visibility: hidden; animation: none; transition: opacity 1.4s, visibility 1.4s; }
+.kolam-stage[data-revealed] .kolam-opening,
+.kolam-hero[data-failed] .kolam-opening { opacity: 1; visibility: visible; }
+@media (prefers-reduced-motion: reduce) {
+  .kolam-stage .permanent-planets .planet-destination { visibility: visible; pointer-events: auto; }
+  .kolam-stage .permanent-planets .planet-label { opacity: .8; }
+  .kolam-stage .kolam-opening { opacity: 1; visibility: visible; }
+}
+
+/* Keep the shared star canvases inside the sticky scene as it leaves view. */
+.kolam-stage { contain: paint; }
+/* A translated link would trap its fixed star canvas and clip the planet. */
+.kolam-stage[data-revealed] .permanent-planets .planet-destination { translate: none; }
+.kolam-stage .permanent-planets .planet-destination .planet-orb { transform: none; }
+
+/* Once formed, render only the small planet bounds instead of three full screens. */
+.kolam-stage .permanent-planets .planet-object canvas[data-compact] { position: absolute; inset: 0; width: 100%; height: 100%; }
+.kolam-hero { --ease: cubic-bezier(.2,.7,.2,1); }
+.kolam-hero a { text-decoration: none; }
+.kolam-hero p, .kolam-hero h1 { margin-block: 0; }
+.kolam-hero .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.kolam-hero a:focus-visible, .flight-cancel:focus-visible { outline: 2px solid #89cbd1; outline-offset: 6px; }

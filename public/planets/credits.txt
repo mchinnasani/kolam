@@ -1,0 +1,10 @@
+Planet maps by Solar System Scope / INOVE
+Source: https://www.solarsystemscope.com/textures/
+License: Creative Commons Attribution 4.0 International
+https://creativecommons.org/licenses/by/4.0/
+
+Files: 2k_earth_daymap.jpg, 2k_earth_clouds.jpg, 2k_saturn.jpg, 2k_jupiter.jpg.
+Local names: earth.jpg, clouds.jpg, saturn.jpg, jupiter.jpg.
+Maps are sampled only to assign colors to individual 3D points. No map is
+rendered as a visible surface. Earth colors are enhanced; Jupiter colors are
+remapped to violet. Clouds, atmosphere, and Saturn rings are also point clouds.

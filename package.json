@@ -1,0 +1,55 @@
+{
+  "name": "@mchinnasani/kolam",
+  "version": "0.1.0",
+  "description": "Reduce animation work with compressed planet point data, precomputed motion paths, and cached rendering.",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "import": "./dist/react.js"
+    },
+    "./space.css": "./src/space.css"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "docs",
+    "src/space.css",
+    "public/planets"
+  ],
+  "scripts": {
+    "dev": "vite --config vite.demo.config.ts --host 127.0.0.1",
+    "build": "vite build && tsc -p tsconfig.build.json",
+    "build:demo": "vite build --config vite.demo.config.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --loader ./scripts/animation-test-loader.mjs --test tests/*.test.ts"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vite": "8.2.2",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
+  }
+}

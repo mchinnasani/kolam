@@ -1,0 +1,56 @@
+{
+  "environment": {
+    "browser": "Codex in-app Chromium",
+    "viewport": [
+      1280,
+      720
+    ],
+    "seed": "performance-check",
+    "runSeconds": 23,
+    "warmupSeconds": 2,
+    "note": "Same machine, sequential runs, native forward/reverse scrolling; developer preview. CPU values measure JS render submission, not GPU duration."
+  },
+  "baseline": [
+    {
+      "frameMeanMs": 8.526146975233456,
+      "frameP95Ms": 9.3,
+      "cpuMeanMs": 2.5783597238851885,
+      "cpuP95Ms": 3.6,
+      "longFrames": 0,
+      "maxDrawCalls": 4967
+    },
+    {
+      "frameMeanMs": 8.5330759853718,
+      "frameP95Ms": 9.3,
+      "cpuMeanMs": 2.5540430719961558,
+      "cpuP95Ms": 3.6,
+      "longFrames": 0,
+      "maxDrawCalls": 4967
+    }
+  ],
+  "optimized": [
+    {
+      "frameMeanMs": 8.333333333333334,
+      "frameP95Ms": 9.1,
+      "cpuMeanMs": 1.0290476190295839,
+      "cpuP95Ms": 1.5,
+      "longFrames": 0,
+      "maxDrawCalls": 2646
+    },
+    {
+      "frameMeanMs": 8.332989281460897,
+      "frameP95Ms": 9.2,
+      "cpuMeanMs": 1.0584755855545538,
+      "cpuP95Ms": 1.5,
+      "longFrames": 0,
+      "maxDrawCalls": 2646
+    }
+  ],
+  "decision": "Enable prepared-path mode by default: reproducible reduction in render CPU and frame intervals, same particle count, viewport and DPR. Baseline retained behind query flag.",
+  "limitations": "Not an all-device FPS guarantee. Input-to-display latency was not directly measured; the repeated native-scroll run measures rAF intervals and long frames.",
+  "source": {
+    "repository": "https://github.com/mchinnasani/portfolio",
+    "commit": "1af7ae9ba14ee94ff34c55a148378c72f6d6d508",
+    "scope": "Original portfolio measurements; not a benchmark of the extracted kolam package."
+  }
+}
