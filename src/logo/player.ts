@@ -1,13 +1,28 @@
 import { validateLogo, prepareLogoPaths, type LogoData, type LogoSettings } from "./format";
+export const ambientStarCount = 640;
 const vertex = `
 precision mediump float;
 attribute vec2 a_start; attribute vec2 a_c1; attribute vec2 a_c2; attribute vec2 a_end;
 attribute vec4 a_color; attribute float a_seed;
 uniform vec2 u_fit; uniform float u_progress; uniform float u_time; uniform float u_size;
 uniform float u_dpr; uniform float u_twinkle; uniform float u_palette;
-uniform vec2 u_pointer; uniform float u_hover;
+uniform vec2 u_pointer; uniform vec2 u_view; uniform float u_hover;
 varying vec4 v_color;
 void main(){
+ if(a_seed<0.){
+   float seed=-a_seed;
+   float z=.65+fract(seed*7.13)*1.8;
+   float travel=u_progress*.65+u_time*.018*min(u_twinkle*3.,1.);
+   vec2 p=a_end*(1.+travel*.24/z);
+   p+=vec2(sin(u_time*.09+seed*30.),cos(u_time*.07+seed*19.))*.013*u_twinkle;
+   p-=u_view*.055/z;
+   float edge=1.-smoothstep(.85,1.15,max(abs(p.x),abs(p.y)));
+   float pulse=.72+.28*sin(u_time*(.3+seed)+seed*170.);
+   v_color=vec4(mix(vec3(.4,.65,.78),vec3(.78,.69,1.),fract(seed*13.)),edge*(.12+.28/z)*mix(1.,pulse,min(u_twinkle*3.,1.)));
+   gl_Position=vec4(p,0.,1.);
+   gl_PointSize=u_dpr*(2.5+4./z);
+   return;
+ }
  float t=clamp((u_progress-a_seed*.12)/.88,0.,1.); t=t*t*(3.-2.*t); float q=1.-t;
  vec2 p=q*q*q*a_start+3.*q*q*t*a_c1+3.*q*t*t*a_c2+t*t*t*a_end;
  // A shared slow current plus individual drift keeps the mark coherent.
@@ -17,6 +32,10 @@ void main(){
  p+=life*(current*.045+drift*.016);
  vec2 away=p-u_pointer; float d=length(away);
  p+=away/max(d,.001)*exp(-d*d*18.)*.075*u_hover*life;
+ // A small perspective shift makes the silhouette float above the distant stars.
+ float depth=sin(a_end.x*2.5+a_end.y*1.7)*.08;
+ p=(p+u_view*(.025+depth*.12))/(1.+depth*u_twinkle);
+ p*=.8+.2*smoothstep(0.,1.,u_progress);
  gl_Position=vec4(p*u_fit,0.,1.);
  vec3 c=a_color.rgb; float blend=clamp(a_end.x*.5+a_end.y*.25+.5,0.,1.);
  if(u_palette>.5 && u_palette<1.5) c=mix(vec3(.27,1.,.79),vec3(.78,.33,1.),blend);
@@ -52,6 +71,8 @@ export class LogoPlayer {
   private dpr = 1;
   private pointerX = 0;
   private pointerY = 0;
+  private viewX = 0;
+  private viewY = 0;
   private hover = 0;
   private hoverTarget = 0;
   onProgress?: (value: number) => void;
@@ -97,7 +118,7 @@ export class LogoPlayer {
     gl.useProgram(program);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE);
-    gl.clearColor(0.016, 0.021, 0.033, 1);
+    gl.clearColor(0, 0, 0, 1);
     for (const key of [
       "fit",
       "progress",
@@ -108,6 +129,7 @@ export class LogoPlayer {
       "palette",
       "glow",
       "pointer",
+      "view",
       "hover",
     ])
       this.uniforms[key] = gl.getUniformLocation(program, `u_${key}`);
@@ -128,7 +150,7 @@ export class LogoPlayer {
   }
   private pointerMove = (event: PointerEvent) => {
     const rect = this.canvas.getBoundingClientRect();
-    const unit = Math.min(rect.width, rect.height) * 0.76;
+    const unit = Math.min(rect.width, rect.height) * 0.84;
     if (!unit) return;
     this.pointerX = ((event.clientX - rect.left - rect.width / 2) * 2) / unit;
     this.pointerY = ((rect.height / 2 - event.clientY + rect.top) * 2) / unit;
@@ -176,8 +198,17 @@ export class LogoPlayer {
     const gl = this.gl;
     this.buffers.forEach((b) => gl.deleteBuffer(b));
     this.buffers = [];
-    const paths = prepareLogoPaths(data.points),
-      attributes = new Float32Array((data.points.length / 6) * 5);
+    const count = data.points.length / 6;
+    const paths = new Float32Array((count + ambientStarCount) * 8),
+      attributes = new Float32Array((count + ambientStarCount) * 5);
+    paths.set(prepareLogoPaths(data.points));
+    // Static ambient points share the logo's buffers and its single draw call.
+    for (let i = 0; i < ambientStarCount; i++) {
+      const index = count + i;
+      paths[index * 8 + 6] = (((i + 1) * 0.754877666) % 1) * 2.6 - 1.3;
+      paths[index * 8 + 7] = (((i + 1) * 0.569840296) % 1) * 2.6 - 1.3;
+      attributes[index * 5 + 4] = -(i + 1) / ambientStarCount;
+    }
     for (let i = 0, j = 0; i < data.points.length; i += 6, j += 5) {
       attributes[j] = data.points[i + 2];
       attributes[j + 1] = data.points[i + 3];
@@ -265,8 +296,22 @@ export class LogoPlayer {
       h = this.canvas.height;
     gl.useProgram(this.program);
     gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.uniform2f(u.fit, (Math.min(w, h) / w) * 0.76, (Math.min(w, h) / h) * 0.76);
+    gl.uniform2f(u.fit, (Math.min(w, h) / w) * 0.84, (Math.min(w, h) / h) * 0.84);
     this.hover += (this.hoverTarget - this.hover) * (1 - Math.exp(-delta / 180));
+    const follow = 1 - Math.exp(-delta / 350);
+    this.viewX +=
+      ((this.reduced.matches ? 0 : Math.max(-1, Math.min(1, this.pointerX)) * this.hoverTarget) -
+        this.viewX) *
+      follow;
+    this.viewY +=
+      ((this.reduced.matches ? 0 : Math.max(-1, Math.min(1, this.pointerY)) * this.hoverTarget) -
+        this.viewY) *
+      follow;
+    gl.uniform2f(
+      u.view,
+      this.settings.twinkle > 0 ? this.viewX : 0,
+      this.settings.twinkle > 0 ? this.viewY : 0,
+    );
     gl.uniform2f(u.pointer, this.pointerX, this.pointerY);
     gl.uniform1f(u.hover, this.hover);
     gl.uniform1f(u.progress, this.progress);
@@ -279,7 +324,7 @@ export class LogoPlayer {
     gl.uniform1f(u.glow, this.settings.glow);
     gl.uniform1f(u.twinkle, this.reduced.matches ? 0 : this.settings.twinkle);
     gl.uniform1f(u.palette, ["original", "aurora", "ember", "ice"].indexOf(this.settings.palette));
-    gl.drawArrays(gl.POINTS, 0, this.data.points.length / 6);
+    gl.drawArrays(gl.POINTS, 0, this.data.points.length / 6 + ambientStarCount);
     this.slow = delta > 28 ? this.slow + 1 : Math.max(0, this.slow - 1);
     if (this.slow > 90 && this.scale === 1) {
       this.scale = 0.7;
@@ -290,7 +335,7 @@ export class LogoPlayer {
       this.onMetrics?.({
         frameMs: delta,
         drawCalls: 1,
-        particles: this.data.points.length / 6,
+        particles: this.data.points.length / 6 + ambientStarCount,
         dpr: this.dpr,
       });
     }

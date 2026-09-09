@@ -2,7 +2,7 @@ import { normalizeForeground, type Foreground } from "../src/logo/foreground";
 import { standaloneHtml } from "../src/logo/html";
 import { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { LogoPlayer, type PlayerMetrics } from "../src/logo/player";
+import { LogoPlayer, ambientStarCount, type PlayerMetrics } from "../src/logo/player";
 import {
   samplePixels,
   encodeLogo,
@@ -44,6 +44,28 @@ function example(): HTMLCanvasElement {
   return c;
 }
 function App() {
+  const [immersive, setImmersive] = useState(false);
+  const expandButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!immersive) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setImmersive(false);
+        expandButton.current?.focus();
+      }
+      if (event.key === "Tab") {
+        event.preventDefault();
+        expandButton.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.body.style.overflow = previous;
+      document.removeEventListener("keydown", escape);
+    };
+  }, [immersive]);
   const canvas = useRef<HTMLCanvasElement>(null),
     player = useRef<LogoPlayer | null>(null),
     source = useRef<HTMLCanvasElement | null>(null),
@@ -308,7 +330,10 @@ function App() {
         <section className="studio" aria-label="Particle logo editor">
           <div className="preview-column">
             <div
-              className={`preview ${dragging ? "dragging" : ""}`}
+              className={`preview ${dragging ? "dragging" : ""} ${immersive ? "immersive" : ""}`}
+              role={immersive ? "dialog" : undefined}
+              aria-modal={immersive || undefined}
+              aria-label={immersive ? "Immersive logo preview" : undefined}
               onDragOver={(e) => {
                 e.preventDefault();
                 setDragging(true);
@@ -320,6 +345,14 @@ function App() {
                 void openFile(e.dataTransfer.files[0]);
               }}
             >
+              <button
+                ref={expandButton}
+                className="immersive-toggle"
+                aria-pressed={immersive}
+                onClick={() => setImmersive(!immersive)}
+              >
+                {immersive ? "↙ Exit space" : "↗ Enter space"}
+              </button>
               <div className="preview-top">
                 <span>
                   <i /> LIVE CANVAS
@@ -373,7 +406,9 @@ function App() {
                 <span>animation file</span>
               </div>
               <div>
-                <strong>{data ? bytes((data.points.length / 6) * 13 * 4) : "—"}</strong>
+                <strong>
+                  {data ? bytes((data.points.length / 6 + ambientStarCount) * 13 * 4) : "—"}
+                </strong>
                 <span>GPU point buffers</span>
               </div>
               <div>

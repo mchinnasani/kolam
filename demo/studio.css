@@ -624,3 +624,11 @@ footer {
 
 #background-mode { width:100%; margin-top:10px; padding:8px; border:1px solid #ffffff25; border-radius:4px; background:#171c17; color:#cad8c2; font:11px inherit; }
 .extraction-debug{font-size:10px;color:#a6b59c;margin-top:14px;line-height:1.7}.extraction-debug summary{cursor:pointer}.extraction-debug dl{display:grid;grid-template-columns:1fr 1fr;gap:5px}.extraction-debug dd{margin:0;overflow-wrap:anywhere}
+
+/* A room of its own, with the same upload and playback controls outside it. */
+.preview { background: #000; min-height: max(620px, 72vh); }
+.immersive-toggle { position: absolute; top: 52px; right: 24px; z-index: 3; background: #070b0dcc; border: 1px solid #ffffff26; color: #c8d7dc; border-radius: 24px; padding: 9px 14px; font: inherit; font-size: 11px; cursor: pointer; backdrop-filter: blur(12px); }
+.immersive-toggle:hover { border-color: #a4e4d777; color: white; }
+.immersive-toggle:focus-visible { outline: 2px solid #bcf7d1; outline-offset: 4px; }
+.preview.immersive { position: fixed; inset: 0; z-index: 100; height: 100dvh; min-height: 0; }
+@media(max-width:600px) { .preview { min-height: 60svh; } }
