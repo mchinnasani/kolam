@@ -79,7 +79,9 @@ I started this because the particle animation on my portfolio was making my lapt
 2. **Save the shape.** Round those values and gzip the data with the settings. A `.kolam` file is versioned JSON inside gzip, not a video or a sequence of rendered frames.
 3. **Prepare the routes.** At load time, a fixed seed gives every dot a start position and two control points leading to its destination. The routes live in GPU buffers.
 4. **Play the paths.** A shader evaluates the prepared curves using one progress value. Changing color or glow updates settings, not geometry. Rotation is not part of the logo player; the earlier planet example has its own renderer.
-5. **Draw only while needed.** The player uses one point draw per active frame, caps pixel ratio, and lowers resolution after sustained slow frames. Hidden and offscreen canvases pause. With twinkle off, a completed logo stops requesting frames until you interact.
+5. **Draw only while needed.** The player uses one point draw per active frame, caps pixel ratio, and lowers resolution after sustained slow frames. Hidden and offscreen canvases pause. With flow & twinkle off, a completed logo stops requesting frames until you interact.
+
+The dots also follow a gentle shader-driven current, with slight individual drift and a soft push around the pointer. The Flow & twinkle slider controls this motion; zero keeps the settled shape still. Reduced-motion preferences disable it. This adds no particle buffers or CPU simulation, and the HTML export uses the same player.
 
 This does not make every image file smaller. A small SVG or PNG can be smaller than the animation it produces. The point is reusable, interactive motion with less repeated setup work. The studio reports the compressed file size and the two GPU point buffers; that buffer number is not total browser memory. The HTML export also includes the player and base64 encoding overhead.
 

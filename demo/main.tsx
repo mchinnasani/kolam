@@ -135,7 +135,11 @@ function App() {
         spacing,
         false,
       );
-      setNormalization({ width: normalized.width, height: normalized.height, scale: normalized.scale });
+      setNormalization({
+        width: normalized.width,
+        height: normalized.height,
+        scale: normalized.scale,
+      });
       setData(next);
       setError("");
     } catch (e) {
@@ -333,7 +337,7 @@ function App() {
               <div className="preview-bottom">
                 <span>{name}</span>
                 <span>
-                  {settings.palette.toUpperCase()} / {settings.twinkle > 0 ? "TWINKLE" : "STILL"}
+                  {settings.palette.toUpperCase()} / {settings.twinkle > 0 ? "FLOW" : "STILL"}
                 </span>
               </div>
             </div>
@@ -531,7 +535,7 @@ function App() {
               {(
                 [
                   ["glow", "Glow"],
-                  ["twinkle", "Twinkle"],
+                  ["twinkle", "Flow & twinkle"],
                 ] as const
               ).map(([key, label]) => (
                 <div key={key}>
@@ -611,7 +615,7 @@ function App() {
               GPU follows those routes as you play or scrub.
             </p>
             <p>
-              No video frames. No image processing on every frame. Switch twinkle off and the
+              No video frames. No image processing on every frame. Switch flow & twinkle off and the
               settled preview stops drawing until you interact. File size depends on your logo—an
               animation can be larger than a small PNG.
             </p>

@@ -5,17 +5,25 @@ attribute vec2 a_start; attribute vec2 a_c1; attribute vec2 a_c2; attribute vec2
 attribute vec4 a_color; attribute float a_seed;
 uniform vec2 u_fit; uniform float u_progress; uniform float u_time; uniform float u_size;
 uniform float u_dpr; uniform float u_twinkle; uniform float u_palette;
+uniform vec2 u_pointer; uniform float u_hover;
 varying vec4 v_color;
 void main(){
  float t=clamp((u_progress-a_seed*.12)/.88,0.,1.); t=t*t*(3.-2.*t); float q=1.-t;
  vec2 p=q*q*q*a_start+3.*q*q*t*a_c1+3.*q*t*t*a_c2+t*t*t*a_end;
+ // A shared slow current plus individual drift keeps the mark coherent.
+ float life=u_twinkle*smoothstep(.35,1.,t);
+ vec2 current=vec2(sin(a_end.y*5.+u_time*.65),cos(a_end.x*4.-u_time*.55));
+ vec2 drift=vec2(sin(u_time*.9+a_seed*41.),cos(u_time*.7+a_seed*67.));
+ p+=life*(current*.026+drift*.011);
+ vec2 away=p-u_pointer; float d=length(away);
+ p+=away/max(d,.001)*exp(-d*d*18.)*.075*u_hover*life;
  gl_Position=vec4(p*u_fit,0.,1.);
  vec3 c=a_color.rgb; float blend=clamp(a_end.x*.5+a_end.y*.25+.5,0.,1.);
  if(u_palette>.5 && u_palette<1.5) c=mix(vec3(.27,1.,.79),vec3(.78,.33,1.),blend);
  if(u_palette>1.5 && u_palette<2.5) c=mix(vec3(1.,.8,.25),vec3(1.,.23,.36),blend);
  if(u_palette>2.5) c=mix(vec3(.25,.62,1.),vec3(.8,1.,1.),blend);
  float pulse=1.-u_twinkle*(.18+.18*sin(u_time*(.7+a_seed)+a_seed*123.));
- v_color=vec4(c*pulse,a_color.a); gl_PointSize=u_size*u_dpr*4.;
+ v_color=vec4(c*pulse,a_color.a); gl_PointSize=u_size*u_dpr*4.*(.88+.24*a_seed);
 }`;
 const fragment = `precision mediump float; varying vec4 v_color; uniform float u_glow;
 void main(){float r=length(gl_PointCoord-.5);float core=1.-smoothstep(.07,.18,r);float halo=exp(-r*r*28.)*u_glow*.46;float a=(core+halo)*v_color.a;if(a<.008)discard;gl_FragColor=vec4(v_color.rgb*a,a);}`;
@@ -42,6 +50,10 @@ export class LogoPlayer {
   private scale = 1;
   private clock = 0;
   private dpr = 1;
+  private pointerX = 0;
+  private pointerY = 0;
+  private hover = 0;
+  private hoverTarget = 0;
   onProgress?: (value: number) => void;
   onError?: (message: string) => void;
   onMetrics?: (value: PlayerMetrics) => void;
@@ -86,7 +98,18 @@ export class LogoPlayer {
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE);
     gl.clearColor(0.016, 0.021, 0.033, 1);
-    for (const key of ["fit", "progress", "time", "size", "dpr", "twinkle", "palette", "glow"])
+    for (const key of [
+      "fit",
+      "progress",
+      "time",
+      "size",
+      "dpr",
+      "twinkle",
+      "palette",
+      "glow",
+      "pointer",
+      "hover",
+    ])
       this.uniforms[key] = gl.getUniformLocation(program, `u_${key}`);
     this.resizeObserver = new ResizeObserver(this.resize);
     this.resizeObserver.observe(canvas);
@@ -98,8 +121,24 @@ export class LogoPlayer {
     document.addEventListener("visibilitychange", this.visibility);
     this.reduced.addEventListener("change", this.motion);
     canvas.addEventListener("webglcontextlost", this.lost);
+    canvas.addEventListener("pointermove", this.pointerMove);
+    canvas.addEventListener("pointerleave", this.pointerLeave);
+    canvas.addEventListener("pointercancel", this.pointerLeave);
     this.resize();
   }
+  private pointerMove = (event: PointerEvent) => {
+    const rect = this.canvas.getBoundingClientRect();
+    const unit = Math.min(rect.width, rect.height) * 0.76;
+    if (!unit) return;
+    this.pointerX = ((event.clientX - rect.left - rect.width / 2) * 2) / unit;
+    this.pointerY = ((rect.height / 2 - event.clientY + rect.top) * 2) / unit;
+    this.hoverTarget = 1;
+    this.wake();
+  };
+  private pointerLeave = () => {
+    this.hoverTarget = 0;
+    this.wake();
+  };
   private lost = (event: Event) => {
     event.preventDefault();
     this.pause();
@@ -227,6 +266,9 @@ export class LogoPlayer {
     gl.useProgram(this.program);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.uniform2f(u.fit, (Math.min(w, h) / w) * 0.76, (Math.min(w, h) / h) * 0.76);
+    this.hover += (this.hoverTarget - this.hover) * (1 - Math.exp(-delta / 180));
+    gl.uniform2f(u.pointer, this.pointerX, this.pointerY);
+    gl.uniform1f(u.hover, this.hover);
     gl.uniform1f(u.progress, this.progress);
     gl.uniform1f(u.time, this.reduced.matches ? 0 : this.clock);
     gl.uniform1f(
@@ -262,6 +304,9 @@ export class LogoPlayer {
     document.removeEventListener("visibilitychange", this.visibility);
     this.reduced.removeEventListener("change", this.motion);
     this.canvas.removeEventListener("webglcontextlost", this.lost);
+    this.canvas.removeEventListener("pointermove", this.pointerMove);
+    this.canvas.removeEventListener("pointerleave", this.pointerLeave);
+    this.canvas.removeEventListener("pointercancel", this.pointerLeave);
     this.buffers.forEach((b) => this.gl.deleteBuffer(b));
     this.gl.deleteProgram(this.program);
   }
